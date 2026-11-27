@@ -1,0 +1,49 @@
+{
+ "cash": 100021.8253968254,
+ "positions": [],
+ "pending_open": [
+  {
+   "action": "BUY",
+   "ticker": "WELSPUNLIV",
+   "book": "positional",
+   "limit": 284.56,
+   "stop_dist": 44.25899276733398,
+   "signal_close": 280.3500061035156,
+   "bear": false,
+   "score": 0.976,
+   "reason": "Momentum/trend composite in top 2%"
+  },
+  {
+   "action": "BUY",
+   "ticker": "ACUTAAS",
+   "book": "positional",
+   "limit": 4141.1,
+   "stop_dist": 510.7049560546875,
+   "signal_close": 4079.89990234375,
+   "bear": false,
+   "score": 0.918,
+   "reason": "Momentum/trend composite in top 8%"
+  },
+  {
+   "action": "BUY",
+   "ticker": "INDHOTEL",
+   "book": "positional",
+   "limit": 900.0,
+   "stop_dist": 64.87499084472657,
+   "signal_close": 886.7000122070312,
+   "bear": false,
+   "score": 0.896,
+   "reason": "Momentum/trend composite in top 10%"
+  }
+ ],
+ "cooldown": {},
+ "trades": [],
+ "equity": [
+  [
+   "2026-11-26",
+   100021.83
+  ]
+ ],
+ "skipped": [],
+ "last_date": "2026-11-26"
+}

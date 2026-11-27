@@ -1,0 +1,266 @@
+<meta name="dash-one-writer">
+<meta name="dash-form" content="dashboard">
+<style>
+.qd { font-family: var(--font-anthropic-sans); color: var(--color-fg); display: flex; flex-direction: column; gap: var(--cds-gap-xl); }
+.qd h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; }
+.qd h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; }
+.qd p { margin: 0; line-height: 1.55; }
+.qd .muted { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.qd .lede { max-width: 75ch; }
+.qd .lede b { font-variant-numeric: tabular-nums; }
+.qd .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--cds-gap-md); }
+.qd .tile, .qd .card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-xs); }
+.qd .card { gap: var(--cds-gap-sm); }
+.qd .num { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.qd .lbl { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.qd .ok { color: var(--color-ok); } .qd .bad { color: var(--color-bad); }
+.qd .tw { overflow-x: auto; }
+.qd table { border-collapse: collapse; width: 100%; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.qd th { text-align: left; font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); padding: 6px 8px; border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+.qd td { padding: 7px 8px; border-bottom: 1px solid var(--color-border-line); vertical-align: top; }
+.qd .n { text-align: right; white-space: nowrap; }
+.qd td.tk { font-weight: var(--cds-font-weight-medium); white-space: nowrap; }
+.qd td.why { min-width: 220px; color: var(--color-fg-muted); }
+.qd td.empty { color: var(--color-fg-muted); text-align: center; padding: var(--cds-pad-lg); }
+.qd .act { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; font-size: var(--cds-font-size-caption); }
+.qd .chart { position: relative; width: 100%; min-height: 240px; }
+.qd .chart svg { display: block; width: 100%; overflow: visible; }
+.qd .axis text { fill: var(--cds-text-secondary); font-size: var(--cds-font-size-caption); }
+.qd .axis path, .qd .axis line { stroke: var(--cds-chart-axis); }
+.qd .grid line { stroke: var(--cds-chart-grid); } .qd .grid path { display: none; }
+.qd .tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); box-shadow: var(--cds-shadow-popover); border-radius: var(--cds-radius); padding: 8px 10px; font-size: var(--cds-font-size-caption); line-height: 1.5; white-space: nowrap; z-index: 5; font-variant-numeric: tabular-nums; }
+.qd .tip .k { color: var(--cds-text-secondary); }
+.qd .legend { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.qd .legend span { display: inline-flex; align-items: center; gap: 6px; }
+.qd .sw { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.qd .note { border-left: 3px solid var(--color-warn); padding: 6px 12px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); line-height: 1.55; }
+.qd details { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); line-height: 1.6; }
+.qd details summary { cursor: pointer; color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+.qd details li { margin-bottom: 4px; }
+.qd .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--cds-gap-lg); }
+</style>
+
+<div class="qd">
+  <header id="top" style="display:flex;flex-direction:column;gap:var(--cds-gap-sm)">
+    <h1>9two3 Quant Desk</h1>
+    <p class="muted">Paper book on ₹1 lakh · Nifty Midcap 150 + Smallcap 250 · cash market only · as of <span data-draw="asof" data-source="status" data-field="asof" data-row="0">—</span>, <span data-draw="run" data-source="status" data-field="run" data-row="0">—</span> run at <span data-draw="gen" data-source="status" data-field="generated_at" data-row="0">—</span></p>
+    <p class="lede" id="takeaway">Mid/small caps are in a <b data-draw="t_regime" data-source="status" data-field="regime" data-row="0">—</b> regime. The model has <b data-draw="t_actions" data-source="n_actions">—</b> action(s) for <span data-draw="t_when" data-source="status" data-field="run" data-row="0">—</span>, and the paper book stands at <b data-draw="t_equity" data-source="status" data-field="equity" data-row="0">—</b> (<b data-draw="t_ret" data-source="status" data-field="return_pct" data-row="0">—</b> since it started on <span data-draw="t_start" data-source="equity" data-field="date" data-row="0">—</span>).</p>
+  </header>
+
+  <section class="tiles" id="kpis">
+    <div class="tile"><span class="lbl">Regime</span><span class="num" data-draw="k_regime" data-source="status" data-field="regime" data-row="0">—</span><span class="lbl"><span data-draw="k_gap" data-source="status" data-field="regime_gap_pct" data-row="0">—</span> vs 200-day average</span></div>
+    <div class="tile"><span class="lbl">Paper equity</span><span class="num" data-draw="k_eq" data-source="status" data-field="equity" data-row="0">—</span><span class="lbl">Started with ₹1,00,000</span></div>
+    <div class="tile"><span class="lbl">Return since start</span><span class="num" data-draw="k_ret" data-source="status" data-field="return_pct" data-row="0">—</span><span class="lbl">After costs</span></div>
+    <div class="tile"><span class="lbl">Open positions</span><span class="num" data-draw="k_pos" data-source="status" data-field="positions" data-row="0">—</span><span class="lbl">5 at most</span></div>
+    <div class="tile"><span class="lbl">Cash</span><span class="num" data-draw="k_cash" data-source="status" data-field="cash" data-row="0">—</span><span class="lbl">Park in a liquid ETF</span></div>
+  </section>
+
+  <section class="card" id="actions">
+    <h2>Actions</h2>
+    <p class="muted">The pre-close run (about 2:35 PM) lists what to buy or sell in the last 30 minutes. The post-close run (about 4:45 PM) lists what to do at tomorrow's open. Never pay above the max price; if it opens higher, skip it.</p>
+    <div class="tw">
+      <table id="orders-table" data-source="orders" data-row-key="id">
+        <thead><tr>
+          <th data-field="when">When</th><th data-field="action">Action</th><th data-field="ticker">Stock</th><th data-field="book">Book</th>
+          <th class="n" data-field="shares">Shares</th><th class="n" data-field="ref_price">Ref price</th><th class="n" data-field="limit">Max price</th>
+          <th class="n" data-field="stop">Stop</th><th class="n" data-field="value">Value ₹</th><th class="n" data-field="risk_rs">Risk ₹</th>
+          <th data-field="exit_plan">Exit plan</th><th data-field="reason">Why</th>
+        </tr></thead>
+        <tbody data-draw="orders"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" id="positions">
+    <h2>Open positions</h2>
+    <p class="muted">Sell at the next open if a stock closes below its stop or fires an avoid signal (failed gap-up, high-volume washout, large gap-down). Otherwise hold to the time stop.</p>
+    <div class="tw">
+      <table id="positions-table" data-source="positions" data-row-key="ticker">
+        <thead><tr>
+          <th data-field="ticker">Stock</th><th data-field="book">Book</th><th data-field="entry_date">Entered</th>
+          <th class="n" data-field="entry_px">Entry</th><th class="n" data-field="shares">Shares</th><th class="n" data-field="last">Last</th>
+          <th class="n" data-field="pnl_rs">P&amp;L ₹</th><th class="n" data-field="pnl_pct">P&amp;L</th><th class="n" data-field="stop">Stop</th>
+          <th class="n" data-field="days_left">Sessions left</th><th data-field="reason">Why bought</th>
+        </tr></thead>
+        <tbody data-draw="positions"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="split">
+    <section class="card" id="paper-equity">
+      <h2>Paper book equity</h2>
+      <p class="muted">Closing value each day, after costs, with idle cash earning a liquid-fund rate.</p>
+      <div class="chart dash-skeleton" data-draw="eqchart" data-source="equity" role="img" aria-label="Paper book equity by day"></div>
+    </section>
+    <section class="card" id="closed">
+      <h2>Closed trades</h2>
+      <div class="tw">
+        <table id="trades-table" data-source="trades" data-row-key="id">
+          <thead><tr>
+            <th data-field="ticker">Stock</th><th data-field="book">Book</th><th data-field="exit_date">Closed</th>
+            <th class="n" data-field="pnl">P&amp;L ₹</th><th class="n" data-field="pnl_pct">P&amp;L</th><th class="n" data-field="days">Days</th><th data-field="reason_out">Exit</th>
+          </tr></thead>
+          <tbody data-draw="trades"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" id="backtest">
+    <h2>How these rules did since 2015 (backtest)</h2>
+    <p class="muted">The same engine run day by day on ₹1 lakh, with costs and idle cash in a liquid ETF, against an equal-weight index of the same stocks.</p>
+    <div class="legend"><span><i class="sw" data-sw="0"></i>System</span><span><i class="sw" data-sw="muted"></i>Equal-weight universe</span></div>
+    <div class="chart dash-skeleton" data-draw="btchart" data-source="bt_equity" role="img" aria-label="Backtest equity of the system against the equal-weight universe, log scale"></div>
+    <div class="tw">
+      <table id="periods-table" data-source="bt_periods" data-row-key="period">
+        <thead><tr>
+          <th data-field="period">Period</th><th class="n" data-field="sys_cagr">System a year</th><th class="n" data-field="sys_max_dd">Worst fall</th><th class="n" data-field="sys_sharpe">Sharpe</th>
+          <th class="n" data-field="bench_cagr">Universe a year</th><th class="n" data-field="bench_max_dd">Worst fall</th><th class="n" data-field="bench_sharpe">Sharpe</th>
+          <th class="n" data-field="trades">Trades</th><th class="n" data-field="win_rate">Win rate</th>
+        </tr></thead>
+        <tbody data-draw="periods"></tbody>
+      </table>
+    </div>
+    <div class="tw">
+      <table id="books-table" data-source="bt_books" data-row-key="book">
+        <thead><tr>
+          <th data-field="book">Book</th><th class="n" data-field="trades">Trades</th><th class="n" data-field="win_rate">Win rate</th>
+          <th class="n" data-field="avg_pnl_pct">Avg trade</th><th class="n" data-field="total_pnl">Total P&amp;L ₹</th><th class="n" data-field="avg_days">Avg days held</th>
+        </tr></thead>
+        <tbody data-draw="books"></tbody>
+      </table>
+    </div>
+    <p class="note">Both lines use today's index members, so stocks that collapsed and left the index are missing; that flatters both, and the universe more. The signal rules were chosen on the full 2015–26 history, so 2021–26 is not a clean out-of-sample test. The system sits about two-thirds in cash; much of its edge is a smaller drawdown, not a higher return.</p>
+  </section>
+
+  <details id="rules">
+    <summary>The rules</summary>
+    <ul>
+      <li><b>Regime.</b> Bull when the equal-weight index of these stocks is above its 200-day average. Bear: no swing breakouts, positional risk halved.</li>
+      <li><b>Positional (3 slots, about 6 months).</b> Buy at the open the highest-ranked stocks on 6-month momentum, distance above the 200-day average, nearness to the 52-week high and rising volume (top 20%, above the 200-day average). Stop at 3× the 20-day ATR. Time stop: 120 sessions.</li>
+      <li><b>Swing (2 slots, about 4 weeks).</b> Bull regime only. A first new 52-week high in 60+ days on 1.5× volume: buy in the last 30 minutes. Stop at 2.5× ATR. Time stop: 20 sessions.</li>
+      <li><b>BTST (2 slots, overnight).</b> Opens 4%+ higher on 2.5× volume and holds at or above the open: buy into the close, sell into the next day's close.</li>
+      <li><b>Exits and avoid list.</b> Sell at the next open on a failed gap-up, a high-volume washout, a large gap-down, or a close below the stop. Then no new entry in that stock for 10 sessions (60 after a washout).</li>
+      <li><b>Sizing.</b> Risk 1% of equity per positional trade, 0.75% per swing, 0.5% per BTST, at most 25% of equity in one stock, 5 positions in all. Costs: 0.45% round trip for midcaps, 0.75% for small caps, plus ₹16 DP charge per sale.</li>
+      <li><b>Not advice.</b> These are the model's suggestions for your own decisions. You place every order.</li>
+    </ul>
+  </details>
+</div>
+
+<script>
+window.QD = (function () {
+  const inr = (v, d = 0) => (v == null || isNaN(v)) ? '—' : '₹' + Number(v).toLocaleString('en-IN', { maximumFractionDigits: d, minimumFractionDigits: d });
+  const pct = (v, d = 2) => (v == null || isNaN(v)) ? '—' : (v > 0 ? '+' : '') + Number(v).toFixed(d) + '%';
+  const num = (v, d = 2) => (v == null || isNaN(v)) ? '—' : Number(v).toLocaleString('en-IN', { maximumFractionDigits: d, minimumFractionDigits: d });
+  const BOOK = { btst: 'BTST (overnight)', swing: 'Swing (≈4 weeks)', positional: 'Positional (≈6 months)' };
+  function row0(id) { const d = dash.data(id); return d.status === 'ok' && d.data && d.data.length ? d.data[0] : null; }
+  function table(tb, id, cols, empty, keyOf) {
+    const d = dash.data(id);
+    tb.replaceChildren();
+    if (d.status !== 'ok') {
+      if (d.status === 'error') { const td = tb.insertRow().insertCell(); td.colSpan = cols.length; td.className = 'empty'; td.textContent = 'Couldn’t load this table.'; }
+      return;
+    }
+    if (!d.data.length) { const td = tb.insertRow().insertCell(); td.colSpan = cols.length; td.className = 'empty'; td.textContent = empty; return; }
+    for (const r of d.data) {
+      const tr = tb.insertRow();
+      if (keyOf) tr.setAttribute('data-key', keyOf(r));
+      for (const c of cols) {
+        const td = tr.insertCell();
+        if (c.cls) td.className = typeof c.cls === 'function' ? c.cls(r) : c.cls;
+        const v = c.fmt ? c.fmt(r[c.f], r) : (r[c.f] == null ? '—' : String(r[c.f]));
+        if (v instanceof Node) td.appendChild(v); else td.textContent = v;
+      }
+    }
+  }
+  function tip(el) { const t = document.createElement('div'); t.className = 'tip'; t.hidden = true; el.appendChild(t); return t; }
+  function tipRows(t, rows) { t.replaceChildren(...rows.map(([k, v]) => { const d = document.createElement('div'); if (k) { const s = document.createElement('span'); s.className = 'k'; s.textContent = k + ' '; d.appendChild(s); } d.appendChild(document.createTextNode(v)); return d; })); }
+  function place(el, t, x, y) { t.style.left = Math.max(0, Math.min(el.clientWidth - t.offsetWidth, x + 12)) + 'px'; t.style.top = Math.max(0, y - 10) + 'px'; }
+  function lineChart(el, rows, series, opts) {
+    el.replaceChildren();
+    const W = el.clientWidth || 600, H = opts.h || 240, m = { t: 10, r: 14, b: 26, l: 62 };
+    const x = d3.scaleUtc().domain(d3.extent(rows, r => r.date)).range([m.l, W - m.r]);
+    const vals = rows.flatMap(r => series.map(s => r[s.k])).filter(v => v != null && v > 0);
+    const y = (opts.log ? d3.scaleLog() : d3.scaleLinear()).domain(d3.extent(vals)).nice().range([H - m.b, m.t]);
+    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H).attr('role', 'img').attr('aria-label', el.getAttribute('aria-label'));
+    const yt = opts.log ? y.ticks(5).filter((v, i, a) => a.length < 7 || [1, 2, 5].includes(+String(v)[0])) : y.ticks(5);
+    svg.append('g').attr('class', 'grid').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).tickValues(yt).tickSize(-(W - m.l - m.r)).tickFormat(''));
+    svg.append('g').attr('class', 'axis').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).tickValues(yt).tickFormat(v => inr(v)));
+    svg.append('g').attr('class', 'axis').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor(W / 100))).tickFormat(opts.tf || d3.utcFormat('%Y')));
+    for (const s of series) svg.append('path').datum(rows).attr('d', d3.line().defined(r => r[s.k] != null).x(r => x(r.date)).y(r => y(r[s.k]))).style('fill', 'none').style('stroke', s.c).style('stroke-width', s.w || 2);
+    const t = tip(el), bis = d3.bisector(r => r.date).center, fmt = d3.utcFormat('%d %b %Y');
+    const dot = svg.append('circle').attr('r', 4).style('fill', series[0].c).style('opacity', 0);
+    svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', W - m.l - m.r).attr('height', H - m.t - m.b).style('fill', 'transparent')
+      .on('mousemove', (ev) => { const [px, py] = d3.pointer(ev, el); const r = rows[bis(rows, x.invert(px))]; dot.attr('cx', x(r.date)).attr('cy', y(r[series[0].k])).style('opacity', 1);
+        tipRows(t, [['', fmt(r.date)], ...series.map(s => [s.name + ':', inr(r[s.k])])]); t.hidden = false; place(el, t, px, py); })
+      .on('mouseleave', () => { t.hidden = true; dot.style('opacity', 0); });
+  }
+  return { inr, pct, num, BOOK, row0, table, lineChart };
+})();
+dash.calc('n_actions', { inputs: ['orders'], title: 'Number of actions', description: 'Count of buy and sell suggestions in the latest run.', fn: (orders) => orders.length });
+</script>
+
+<script>
+for (const s of document.querySelectorAll('.qd [data-sw]')) { const k = s.getAttribute('data-sw'); s.style.background = k === 'muted' ? 'var(--cds-chart-muted)' : dash.colors[+k]; }
+const S = (name, fmt) => dash.draw(name, (el) => { const r = QD.row0('status'); el.textContent = r ? fmt(r) : '—'; });
+S('asof', r => r.asof); S('run', r => r.run); S('gen', r => r.generated_at || '—');
+S('t_regime', r => r.regime); S('k_regime', r => r.regime);
+S('t_when', r => r.run === 'pre-close' ? "today's close" : 'the next session');
+S('t_equity', r => QD.inr(r.equity)); S('k_eq', r => QD.inr(r.equity));
+S('t_ret', r => QD.pct(r.return_pct)); S('k_ret', r => QD.pct(r.return_pct));
+S('k_gap', r => QD.pct(r.regime_gap_pct, 1)); S('k_pos', r => String(r.positions)); S('k_cash', r => QD.inr(r.cash));
+dash.draw('t_actions', (el) => { const d = dash.data('n_actions'); el.textContent = d.status === 'ok' && d.data != null ? String(d.data) : '—'; });
+dash.draw('t_start', (el) => { const r = QD.row0('equity'); el.textContent = r ? r.date : '—'; });
+dash.onData(() => {
+  const r = QD.row0('status');
+  for (const el of document.querySelectorAll('.qd [data-draw="k_regime"], .qd [data-draw="k_ret"]')) {
+    const v = r ? (el.getAttribute('data-draw') === 'k_regime' ? r.regime === 'Bull' : r.return_pct >= 0) : null;
+    el.classList.toggle('ok', v === true); el.classList.toggle('bad', v === false);
+  }
+});
+
+const act = (v) => { const s = document.createElement('span'); s.className = 'act ' + (v === 'BUY' ? 'ok' : 'bad'); s.textContent = v; return s; };
+dash.draw('orders', (tb) => QD.table(tb, 'orders', [
+  { f: 'when' }, { f: 'action', fmt: act }, { f: 'ticker', cls: 'tk' }, { f: 'book' },
+  { f: 'shares', cls: 'n' }, { f: 'ref_price', cls: 'n', fmt: v => QD.num(v) }, { f: 'limit', cls: 'n', fmt: v => QD.num(v) },
+  { f: 'stop', cls: 'n', fmt: v => QD.num(v) }, { f: 'value', cls: 'n', fmt: v => QD.num(v, 0) }, { f: 'risk_rs', cls: 'n', fmt: v => QD.num(v, 0) },
+  { f: 'exit_plan', cls: 'why' }, { f: 'reason', cls: 'why' }
+], 'No actions this session.'));
+dash.draw('positions', (tb) => QD.table(tb, 'positions', [
+  { f: 'ticker', cls: 'tk' }, { f: 'book' }, { f: 'entry_date' }, { f: 'entry_px', cls: 'n', fmt: v => QD.num(v) }, { f: 'shares', cls: 'n' },
+  { f: 'last', cls: 'n', fmt: v => QD.num(v) }, { f: 'pnl_rs', cls: r => 'n ' + (r.pnl_rs >= 0 ? 'ok' : 'bad'), fmt: v => QD.num(v, 0) },
+  { f: 'pnl_pct', cls: r => 'n ' + (r.pnl_pct >= 0 ? 'ok' : 'bad'), fmt: v => QD.pct(v) }, { f: 'stop', cls: 'n', fmt: v => QD.num(v) },
+  { f: 'days_left', cls: 'n' }, { f: 'reason', cls: 'why' }
+], 'No open positions.'));
+dash.draw('trades', (tb) => QD.table(tb, 'trades', [
+  { f: 'ticker', cls: 'tk' }, { f: 'book' }, { f: 'exit_date' }, { f: 'pnl', cls: r => 'n ' + (r.pnl >= 0 ? 'ok' : 'bad'), fmt: v => QD.num(v, 0) },
+  { f: 'pnl_pct', cls: r => 'n ' + (r.pnl_pct >= 0 ? 'ok' : 'bad'), fmt: v => QD.pct(v) }, { f: 'days', cls: 'n' }, { f: 'reason_out', cls: 'why' }
+], 'No closed trades yet.'));
+dash.draw('periods', (tb) => QD.table(tb, 'bt_periods', [
+  { f: 'period', cls: 'tk' }, { f: 'sys_cagr', cls: 'n', fmt: v => QD.pct(v, 1) }, { f: 'sys_max_dd', cls: 'n', fmt: v => QD.pct(v, 1) }, { f: 'sys_sharpe', cls: 'n', fmt: v => QD.num(v) },
+  { f: 'bench_cagr', cls: 'n', fmt: v => QD.pct(v, 1) }, { f: 'bench_max_dd', cls: 'n', fmt: v => QD.pct(v, 1) }, { f: 'bench_sharpe', cls: 'n', fmt: v => QD.num(v) },
+  { f: 'trades', cls: 'n' }, { f: 'win_rate', cls: 'n', fmt: v => QD.num(v, 0) + '%' }
+], 'No backtest yet.'));
+dash.draw('books', (tb) => QD.table(tb, 'bt_books', [
+  { f: 'book', cls: 'tk', fmt: v => QD.BOOK[v] || v }, { f: 'trades', cls: 'n' }, { f: 'win_rate', cls: 'n', fmt: v => QD.num(v, 0) + '%' },
+  { f: 'avg_pnl_pct', cls: 'n', fmt: v => QD.pct(v) }, { f: 'total_pnl', cls: 'n', fmt: v => QD.num(v, 0) }, { f: 'avg_days', cls: 'n', fmt: v => QD.num(v, 0) }
+], 'No backtest yet.', r => r.book));
+
+const parse = d3.utcParse('%Y-%m-%d');
+dash.draw('eqchart', (el) => {
+  const d = dash.data('equity');
+  el.classList.toggle('dash-skeleton', d.status === 'loading');
+  if (d.status !== 'ok') { el.replaceChildren(); if (d.status === 'error') el.textContent = 'Couldn’t load the equity curve.'; return; }
+  const rows = d.data.map(r => ({ date: parse(r.date), equity: +r.equity }));
+  if (rows.length < 2) { el.replaceChildren(); const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'The curve fills in with each post-close run.'; el.appendChild(p); return; }
+  QD.lineChart(el, rows, [{ k: 'equity', c: dash.colors[0], name: 'Equity' }], { h: 220, tf: d3.utcFormat('%d %b') });
+});
+dash.draw('btchart', (el) => {
+  const d = dash.data('bt_equity');
+  el.classList.toggle('dash-skeleton', d.status === 'loading');
+  if (d.status !== 'ok') { el.replaceChildren(); if (d.status === 'error') el.textContent = 'Couldn’t load the backtest.'; return; }
+  const rows = d.data.map(r => ({ date: parse(r.date), system: +r.system, benchmark: +r.benchmark }));
+  QD.lineChart(el, rows, [{ k: 'system', c: dash.colors[0], name: 'System' }, { k: 'benchmark', c: 'var(--cds-chart-muted)', name: 'Universe', w: 1.5 }], { h: 260, log: true });
+});
+</script>

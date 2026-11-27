@@ -1,0 +1,12 @@
+9two3 Quant Desk — pre-close run, 2026-11-27
+Regime: Bull (mid/small-cap index +1.2% vs 200-day avg)
+Paper book: Rs 99,960 (-0.04% since start), 3 positions, cash Rs 76,352
+
+No actions.
+
+OPEN POSITIONS
+- WELSPUNLIV [Positional (≈6 months)] 22 @ 280.99 → 284.38 (+1.2%), stop 236.73, 120 sessions left
+- ACUTAAS [Positional (≈6 months)] 1 @ 4,100.00 → 4,060.20 (-1.0%), stop 3,589.30, 120 sessions left
+- INDHOTEL [Positional (≈6 months)] 15 @ 888.00 → 886.10 (-0.2%), stop 823.13, 120 sessions left
+
+Model suggestions for your own decisions, not advice. You place every order yourself.
