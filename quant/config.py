@@ -64,6 +64,16 @@ POS_EXIT_MIN_DAYS = 20
 MAX_ADV_PCT = 0.05
 IMPACT_COEF = 0.003          # 0.3% at 10% of a day's value, 0.1% at ~1%
 
+# Universe: every NSE equity over Rs 100 cr market cap (daily liquidity filter above still applies).
+# The bull/bear regime is measured on the Nifty Midcap 150 + Smallcap 250 list only, as before.
+UNIVERSE_FILE = "universe_all.txt"
+REGIME_UNIVERSE_FILE = "universe.txt"
+COST_PCT["MICRO"] = 0.010
+# Trade only companies at or above this market cap (Rs crore). Smaller ones are still scanned and
+# shown for information: in the 10-year test, trading them lowered returns (17% vs 24% a year).
+MIN_MCAP_CR = 5000
+MCAP_FILE = "universe_mcap.csv"
+
 # Delivery
 EMAIL_TO = ""                # the scheduled task holds the address (repo is public)
 

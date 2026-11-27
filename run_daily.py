@@ -96,6 +96,22 @@ def meta(run):
             {"label": "Prices", "value": "Yahoo Finance daily NSE data, adjusted; intraday values are partial-day"}]
 
 
+def small_cap_signals(F, t):
+    """Signals in liquid stocks below the market-cap floor: shown, never traded."""
+    out = []
+    for name, arr in (("BTST gap-and-hold", getattr(F, "gap_hold_small", None)),
+                      ("fresh 52-week high", getattr(F, "hi52_small", None))):
+        if arr is None:
+            continue
+        tks = [F.cols[j] for j in np.where(arr[t])[0]]
+        if tks:
+            out.append(f"- {name}: {', '.join(tks[:15])}")
+    if not out:
+        return ""
+    return ("\n\nALSO SEEN IN SMALLER COMPANIES (under Rs %s cr; for information only, not traded:"
+            " in the 10-year test these lowered returns)\n" % f"{C.MIN_MCAP_CR:,}") + "\n".join(out)
+
+
 def preclose():
     (ROOT / "out").mkdir(exist_ok=True); (ROOT / "out" / "SKIP").unlink(missing_ok=True)
     S = load_state()
@@ -116,8 +132,9 @@ def preclose():
             p["last_close"] = float(px)
     rep = report.build(F, e.S, t, "pre-close", orders, now_ist().strftime("%H:%M IST"))
     report.write(rep, meta("pre-close"))
-    (ROOT / "out" / "email.txt").write_text(report.email_text(rep))
-    print(report.email_text(rep))
+    txt = report.email_text(rep) + small_cap_signals(F, t)
+    (ROOT / "out" / "email.txt").write_text(txt)
+    print(txt)
 
 
 def postclose():
@@ -236,6 +253,9 @@ def morning():
         L += ["", tom]
     L += ["", "WATCHLIST FOR THE 3 PM WINDOW (not buys yet; the 2:35 PM email confirms)"] + \
          ([f"- {x}" for x in watch] if watch else ["- Nothing notable at the open."])
+    sc = small_cap_signals(F, t)
+    if sc:
+        L += [sc.strip()]
     L += ["", "No intraday trades: none tested beat costs. Model suggestions for your own decisions, not advice."]
     txt = "\n".join(L)
     (ROOT / "out" / "morning.txt").write_text(txt)

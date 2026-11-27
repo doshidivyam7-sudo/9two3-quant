@@ -9,7 +9,10 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
 
 
-def load_universe(path=ROOT / "universe.txt"):
+def load_universe(path=None):
+    if path is None:
+        from . import config as C
+        path = ROOT / getattr(C, "UNIVERSE_FILE", "universe.txt")
     tick, seg = [], {}
     for line in pathlib.Path(path).read_text().splitlines():
         if line.startswith("#") or ":" not in line:
@@ -21,7 +24,7 @@ def load_universe(path=ROOT / "universe.txt"):
     return tick, pd.Series(seg)
 
 
-def download(tickers, start, chunk=40, pause=1.5):
+def download(tickers, start, chunk=50, pause=1.0):
     import yfinance as yf
     parts = {f: [] for f in ["Open", "High", "Low", "Close", "Volume"]}
     for i in range(0, len(tickers), chunk):
@@ -29,7 +32,7 @@ def download(tickers, start, chunk=40, pause=1.5):
         for attempt in range(4):
             try:
                 d = yf.download(batch, start=start, progress=False, auto_adjust=True,
-                                threads=False, group_by="column")
+                                threads=True, group_by="column")
                 break
             except Exception:
                 time.sleep(8 * (attempt + 1))

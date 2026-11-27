@@ -4,6 +4,31 @@ import pandas as pd
 from . import config as C
 
 
+_REG = None
+_MC = None
+
+
+def _mcaps():
+    global _MC
+    if _MC is None:
+        import pathlib
+        f = pathlib.Path(__file__).resolve().parents[1] / getattr(C, "MCAP_FILE", "universe_mcap.csv")
+        _MC = pd.read_csv(f).set_index("ticker")["mcap_cr"].to_dict() if f.exists() else {}
+    return _MC or None
+
+
+def _regime_cols(cols):
+    """Columns used for the bull/bear regime index (the original mid/small-cap list)."""
+    global _REG
+    if _REG is None:
+        import pathlib
+        from .data import load_universe
+        f = pathlib.Path(__file__).resolve().parents[1] / getattr(C, "REGIME_UNIVERSE_FILE", "universe.txt")
+        _REG = set(load_universe(f)[0]) if f.exists() else set()
+    sel = [x for x in cols if x in _REG]
+    return sel if len(sel) >= 50 else cols
+
+
 class Features:
     def __init__(self, P, seg):
         o, h, l, c, v = P["o"], P["h"], P["l"], P["c"], P["v"]
@@ -24,7 +49,12 @@ class Features:
         tr = tr.reindex(c.index)
         atr20 = tr.rolling(20, min_periods=15).mean()
         tv = (c * v).rolling(20, min_periods=15).median()
-        elig = (c >= C.MIN_PRICE) & (tv >= C.MIN_TRADED_VALUE) & c.notna()
+        liquid = (c >= C.MIN_PRICE) & (tv >= C.MIN_TRADED_VALUE) & c.notna()
+        elig = liquid.copy()
+        mc = _mcaps()
+        if mc is not None and getattr(C, "MIN_MCAP_CR", 0):
+            big = pd.Series({x: mc.get(x, 0) >= C.MIN_MCAP_CR for x in c.columns})
+            elig = elig & big.reindex(c.columns).fillna(False).values[None, :]
         for x in [C.TOM["etf"], C.CORE["etf"]]:
             if x in elig.columns:
                 elig[x] = False            # the ETF is only a vehicle, never a stock signal
@@ -37,7 +67,8 @@ class Features:
         comp = sum(r.fillna(0) for r in ranks) / 4
         comp = comp.where(elig & ranks[0].notna() & ranks[1].notna())
 
-        ew = cc.where(elig.shift(1)).mean(axis=1).fillna(0)
+        reg = _regime_cols(list(c.columns))
+        ew = cc.where(elig.shift(1))[reg].mean(axis=1).fillna(0)
         idx = np.exp(ew.cumsum())
         avg = idx.rolling(C.REGIME_SMA, min_periods=C.REGIME_SMA).mean()
 
@@ -49,6 +80,9 @@ class Features:
         self.comp = comp.values; self.mom = mom.values; self.trend = trend.values
         self.gap_hold = ((gapr >= 0.04) & (c >= o) & (rvol >= 2.5) & elig).values
         self.hi52 = (at_hi & no_hi_60 & (rvol >= 1.5) & elig).values
+        small = (liquid & ~elig).values            # scanned, not traded
+        self.gap_hold_small = ((gapr >= 0.04) & (c >= o) & (rvol >= 2.5)).values & small
+        self.hi52_small = (at_hi & no_hi_60 & (rvol >= 1.5)).values & small
         self.gap_fail = ((gapr >= 0.04) & (c < o * 0.98) & (rvol >= 2.5)).values
         self.washout = ((ret1 <= -0.06) & (rvol >= 3)).values
         self.gap_down = (gapr <= -0.05).values
