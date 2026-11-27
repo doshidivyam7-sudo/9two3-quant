@@ -1,6 +1,17 @@
 {
  "date": "2026-11-27",
  "partial": true,
- "generated_at": "2026-11-27T14:39+05:30",
- "orders": []
+ "generated_at": "2026-11-27T14:51+05:30",
+ "orders": [
+  {
+   "action": "BUY",
+   "ticker": "SUPRIYA",
+   "book": "btst",
+   "shares": 13,
+   "px": 651.5999755859375,
+   "stop": 615.0,
+   "reason": "Gap-up of 4%+ holding on heavy volume",
+   "rvol": 16.8
+  }
+ ]
 }
