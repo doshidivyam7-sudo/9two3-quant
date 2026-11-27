@@ -9,6 +9,7 @@ so the model's live record builds up day by day.
 | Time (IST) | Command | What it does |
 |---|---|---|
 | ~14:35 | `python run_daily.py preclose` | Scans today's live prices: what to **buy or sell in the last 30 minutes** (BTST and swing entries, BTST exits, time stops). Writes `state/preclose_orders.json`. |
+| ~09:27 | `python run_daily.py morning` | Morning brief: last night's open orders checked against the actual open (buy now or skip), sells due, warnings on holdings, and the watchlist for the 3 PM window. Email only. |
 | ~16:45 | `python run_daily.py postclose` | Fills the paper book (today's open and close), checks stops and avoid signals, and lists what to **buy or sell at tomorrow's open** (positional entries, exits). Updates `state/book.json`. |
 
 Both write dashboard files to `out/` and an email body to `out/email.txt`. On NSE holidays they write

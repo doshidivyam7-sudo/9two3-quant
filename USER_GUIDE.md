@@ -4,6 +4,9 @@ You don't need to code. The model runs itself every trading day and tells you wh
 
 ## What you get each trading day
 
+0. **~9:30 AM email — "morning brief".** Last night's buys checked against the real opening price
+   (buy now, or skip if it opened above the max price), any sells due, warnings on what you hold, and a
+   watchlist for the afternoon. It never suggests intraday trades.
 1. **~2:40 PM email — "into the close".** Anything to buy or sell between 3:00 and 3:25 PM today.
    Buy with a limit order near the reference price. Skip anything that has fallen below today's low.
 2. **~4:50 PM email — "at tomorrow's open".** Anything to buy or sell when the market opens tomorrow.

@@ -166,8 +166,82 @@ def postclose():
     print(txt)
 
 
+def morning():
+    """~09:27 IST: act on last night's open orders, flag holdings, and build today's watchlist."""
+    (ROOT / "out").mkdir(exist_ok=True); (ROOT / "out" / "SKIP").unlink(missing_ok=True)
+    S = load_state()
+    P, seg, partial = get_data(partial_ok=True)
+    if not os.environ.get("QUANT_ASOF") and P["c"].index[-1].date() != now_ist().date():
+        print("SKIP: no trading session today (holiday or weekend)")
+        (ROOT / "out" / "SKIP").write_text("no session")
+        return
+    F = Features(P, seg)
+    t = len(F.index) - 1
+    e = Engine(F, S)
+    def px(arr, tk):
+        v = arr[t, F.col(tk)]
+        return float(v) if np.isfinite(v) else None
+    act, warn, watch = [], [], []
+    for o in S.get("pending_open", []):
+        tk = o["ticker"]; op, last = px(F.o, tk), px(F.c, tk)
+        if o["action"] == "BUY":
+            if op is None:
+                continue
+            if op <= o["limit"] and (last or op) <= o["limit"]:
+                stop = (last or op) - o["stop_dist"]
+                act.append(f"BUY {tk} [{o['book']}] now, limit Rs {o['limit']:,.2f} (opened {op:,.2f}, now {last:,.2f}); "
+                           f"stop on a close below Rs {stop:,.2f}. Why: {o['reason']}")
+            else:
+                act.append(f"SKIP {tk}: opened/trading above the max price Rs {o['limit']:,.2f} (open {op:,.2f}). Don't chase.")
+        else:
+            act.append(f"SELL {tk} now (at/near the open). Why: {o['reason']}")
+    for p in S["positions"]:
+        tk = p["ticker"]; g = F.gapr[t, F.col(tk)]; last = px(F.c, tk)
+        if np.isfinite(g) and g <= -0.05:
+            warn.append(f"{tk}: opened {g*100:.1f}% lower (large gap-down). The model will exit at tomorrow's open unless it recovers; no action needed now.")
+        if last and last < p["stop"]:
+            warn.append(f"{tk}: trading below its stop Rs {p['stop']:,.2f}. If it CLOSES below, sell at tomorrow's open.")
+    # watchlist for the close: big gap-ups on early volume, and top-ranked stocks near a 52-week high
+    _, vf = session_fraction()
+    for j in np.where((F.gapr[t] >= 0.04) & F.elig[t])[0]:
+        tk = F.cols[j]
+        if tk in e.held() or tk == C.TOM["etf"]:
+            continue
+        watch.append(f"{tk}: gapped up {F.gapr[t, j]*100:.1f}%, now {(F.c[t, j]/F.o[t, j]-1)*100:+.1f}% vs open. "
+                     f"BTST candidate if it holds above the open with 2.5x volume by 2:35 PM.")
+    hi = pd.DataFrame(F.c).rolling(252, min_periods=200).max().shift(1).values[t]
+    near = [(F.comp[t, j], j) for j in range(len(F.cols))
+            if F.elig[t, j] and np.isfinite(F.comp[t, j]) and F.comp[t, j] >= 0.8 and np.isfinite(hi[j])
+            and F.c[t, j] >= 0.98 * hi[j] and F.cols[j] not in e.held()
+            and F.cols[j] not in {o["ticker"] for o in S.get("pending_open", [])}]
+    for sc, j in sorted(near, reverse=True)[:8]:
+        watch.append(f"{F.cols[j]}: top {100 - sc*100:.0f}% momentum, {(F.c[t, j]/hi[j]-1)*100:+.1f}% vs its 52-week high. "
+                     f"Swing candidate if it closes at a fresh high on volume.")
+    k, left = e.month_pos(t)
+    tom = ""
+    if C.TOM["enabled"]:
+        if left == C.TOM["enter_days_left"]:
+            tom = f"Month-end window: entry day. If the regime is Bull at 2:35 PM, the model buys {C.TOM['etf']} into today's close."
+        elif any(p["book"] == "tom" for p in S["positions"]) and k >= C.TOM["exit_day"]:
+            tom = f"Month-end window: exit day. Sell {C.TOM['etf']} into today's close."
+    regime = "Bull" if F.bull[t] else "Bear"
+    L = [f"9two3 Quant Desk — morning brief, {F.index[t].date()} ({now_ist().strftime('%H:%M')} IST)",
+         f"Regime: {regime} (mid/small-cap index {(F.regime_idx[t]/F.regime_avg[t]-1)*100:+.1f}% vs 200-day avg)", ""]
+    L += ["DO NOW"] + ([f"- {x}" for x in act] if act else ["- Nothing to do at the open."])
+    if warn:
+        L += ["", "HOLDINGS TO WATCH"] + [f"- {x}" for x in warn]
+    if tom:
+        L += ["", tom]
+    L += ["", "WATCHLIST FOR THE 3 PM WINDOW (not buys yet; the 2:35 PM email confirms)"] + \
+         ([f"- {x}" for x in watch] if watch else ["- Nothing notable at the open."])
+    L += ["", "No intraday trades: none tested beat costs. Model suggestions for your own decisions, not advice."]
+    txt = "\n".join(L)
+    (ROOT / "out" / "morning.txt").write_text(txt)
+    print(txt)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("run", choices=["preclose", "postclose"])
+    ap.add_argument("run", choices=["preclose", "postclose", "morning"])
     a = ap.parse_args()
-    preclose() if a.run == "preclose" else postclose()
+    {"preclose": preclose, "postclose": postclose, "morning": morning}[a.run]()
