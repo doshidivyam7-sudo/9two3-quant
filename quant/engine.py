@@ -37,8 +37,10 @@ class Engine:
         x = arr[t, j]
         return float(x) if np.isfinite(x) else fallback
 
-    def _cost(self, value, seg, side):
+    def _cost(self, value, seg, side, tv=None):
         c = value * C.COST_PCT.get(seg, C.COST_PCT["SMALL"]) / 2
+        if tv and np.isfinite(tv) and tv > 0 and seg not in ("ETF",):
+            c += value * C.IMPACT_COEF * math.sqrt(value / (0.1 * tv))
         return c + (C.DP_CHARGE if side == "SELL" else 0.0)
 
     def equity(self, t):
@@ -55,7 +57,7 @@ class Engine:
 
     def count(self, book=None, exclude=()):
         return sum(1 for p in self.S["positions"]
-                   if (p["book"] == book if book else p["book"] != "tom") and p["ticker"] not in exclude)
+                   if (p["book"] == book if book else p["book"] not in ("tom", "core")) and p["ticker"] not in exclude)
 
     def days_held(self, p, t):
         t0 = self._t_of(p["entry_date"])
@@ -83,10 +85,12 @@ class Engine:
             left = int(np.busday_count((d + pd.Timedelta(days=1)).date(), nxt))
         return k, left
 
-    def size(self, book, px, stop, equity, cash, bear=False):
+    def size(self, book, px, stop, equity, cash, bear=False, tv=None):
         risk = C.RISK[book] * equity * (C.BEAR_RISK_MULT if (bear and book == "positional") else 1)
         dist = max(px - stop, px * C.MIN_STOP_PCT)
         n = min(risk / dist, C.MAX_WEIGHT * equity / px, (cash * 0.995) / px)
+        if tv is not None and np.isfinite(tv) and tv > 0:
+            n = min(n, C.MAX_ADV_PCT * tv / px)
         return int(math.floor(n)) if n >= 1 else 0
 
     # ------------------------------------------------------------ 1. open
@@ -96,6 +100,10 @@ class Engine:
         for o in [x for x in pend if x["action"] == "SELL"]:
             self._sell(t, o["ticker"], self._px(F.o, t, F.col(o["ticker"])), o["reason"])
         eq = self.equity(t - 1) if t > 0 else S["cash"]
+        need = sum(1 for x in pend if x["action"] == "BUY")
+        core = next((p for p in S["positions"] if p["book"] == "core"), None)
+        if core and need and S["cash"] < need * C.MAX_WEIGHT * eq:
+            self._sell(t, core["ticker"], self._px(F.o, t, F.col(core["ticker"])), "Core ETF: cash needed for new buys")
         for o in [x for x in pend if x["action"] == "BUY"]:
             j = F.col(o["ticker"])
             op = self._px(F.o, t, j)
@@ -106,7 +114,7 @@ class Engine:
             if self.count() >= C.MAX_POS["total"] or self.count(o["book"]) >= C.MAX_POS[o["book"]]:
                 continue
             stop = op - o["stop_dist"]
-            n = self.size(o["book"], op, stop, eq, S["cash"], o.get("bear", False))
+            n = self.size(o["book"], op, stop, eq, S["cash"], o.get("bear", False), F.tv[t - 1, j] if t > 0 else None)
             if n < 1:
                 continue
             self._buy(t, o["ticker"], o["book"], op, n, stop, o["reason"])
@@ -118,6 +126,8 @@ class Engine:
         orders, selling = [], set()
         k, left = self.month_pos(t)
         for p in S["positions"]:
+            if p["book"] == "core":
+                continue
             if p["book"] == "tom":
                 if p["entry_date"][:7] != self._date(t)[:7] and k >= C.TOM["exit_day"]:
                     orders.append({"action": "SELL", "ticker": p["ticker"], "book": "tom", "shares": p["shares"],
@@ -150,6 +160,8 @@ class Engine:
             tk = F.cols[j]
             if tk in held or tk in queued or self.in_cooldown(tk, t):
                 continue
+            if book == "swing" and C.SWING_MIN_COMP > 0 and not (F.comp[t, j] >= C.SWING_MIN_COMP):
+                continue
             if n_tot >= C.MAX_POS["total"] or n_book[book] >= C.MAX_POS[book]:
                 continue
             px = self._px(F.c, t, j)
@@ -163,7 +175,7 @@ class Engine:
                 if a is None:
                     continue
                 stop = px - C.ATR_MULT["swing"] * a
-            n = self.size(book, px, stop, eq, cash)
+            n = self.size(book, px, stop, eq, cash, tv=F.tv[t, j])
             if n < 1:
                 continue
             orders.append({"action": "BUY", "ticker": tk, "book": book, "shares": n, "px": px,
@@ -180,20 +192,56 @@ class Engine:
                     orders.append({"action": "BUY", "ticker": etf, "book": "tom", "shares": n, "px": px,
                                    "stop": round(px * 0.5, 2),
                                    "reason": "Month-end SIP-flow window (last 2 + first 3 trading days)"})
+                    cash -= n * px
+        orders += self._core_orders(t, eq, cash, bull)
         return orders
+
+    def _core_orders(self, t, eq, cash, bull):
+        F, S = self.F, self.S
+        ce = C.CORE["etf"]
+        if not C.CORE["enabled"] or ce not in F.cols:
+            return []
+        px = self._px(F.c, t, F.col(ce))
+        if not px:
+            return []
+        cur = next((p for p in S["positions"] if p["book"] == "core"), None)
+        cur_val = cur["shares"] * px if cur else 0.0
+        target = 0.0
+        if bull:
+            target = max(0.0, min(C.CORE["weight"] * eq, cash + cur_val - C.CORE["reserve"] * eq))
+        diff = target - cur_val
+        if target == 0 and cur:
+            return [{"action": "SELL", "ticker": ce, "book": "core", "shares": cur["shares"],
+                     "reason": "Core ETF: regime turned bear" if not bull else "Core ETF: cash needed"}]
+        if abs(diff) < C.CORE["rebalance"] * eq:
+            return []
+        n = int(abs(diff) // px)
+        if n < 1:
+            return []
+        if diff > 0:
+            return [{"action": "BUY", "ticker": ce, "book": "core", "shares": n, "px": px, "stop": round(px * 0.5, 2),
+                     "reason": "Core ETF: bull regime, idle cash put to work"}]
+        return [{"action": "TRIM", "ticker": ce, "book": "core", "shares": n, "reason": "Core ETF: free up cash"}]
 
     # ------------------------------------------------------------ 3. close fills
     def fill_close(self, t, orders):
         F = self.F
+        for o in [x for x in orders if x["action"] == "TRIM"]:
+            self._trim(t, o["ticker"], o["shares"], self._px(F.c, t, F.col(o["ticker"])))
         for o in [x for x in orders if x["action"] == "SELL"]:
             if o["ticker"] in self.held():
                 self._sell(t, o["ticker"], self._px(F.c, t, F.col(o["ticker"])), o["reason"])
         for o in [x for x in orders if x["action"] == "BUY"]:
             j = F.col(o["ticker"])
             px = self._px(F.c, t, j)
-            if px is None or o["ticker"] in self.held():
+            if px is None:
                 continue
-            if o["book"] != "tom" and (self.count() >= C.MAX_POS["total"] or self.count(o["book"]) >= C.MAX_POS[o["book"]]):
+            if o["book"] == "core" and o["ticker"] in self.held():
+                self._add(t, o["ticker"], px, min(o["shares"], int(self.S["cash"] * 0.995 // px)))
+                continue
+            if o["ticker"] in self.held():
+                continue
+            if o["book"] not in ("tom", "core") and (self.count() >= C.MAX_POS["total"] or self.count(o["book"]) >= C.MAX_POS[o["book"]]):
                 continue
             n = min(o["shares"], int(self.S["cash"] * 0.995 // px))
             if n < 1:
@@ -212,7 +260,7 @@ class Engine:
         why_flag = {"gap_fail": "Gap-up failed (avoid signal)", "washout": "High-volume washout (avoid signal)",
                     "gap_down": "Large gap-down (avoid signal)"}
         for p in S["positions"]:
-            if p["book"] == "tom":
+            if p["book"] in ("tom", "core"):
                 continue
             j = F.col(p["ticker"])
             reason = None
@@ -220,6 +268,10 @@ class Engine:
                 if arr[t, j]:
                     reason = why_flag[k]
             px = self._px(F.c, t, j)
+            if (reason is None and p["book"] == "positional" and C.POS_EXIT_COMP > 0
+                    and self.days_held(p, t) >= C.POS_EXIT_MIN_DAYS and np.isfinite(F.comp[t, j])
+                    and F.comp[t, j] < C.POS_EXIT_COMP):
+                reason = "Momentum rank faded"
             if reason is None and px is not None and px < p["stop"] and C.USE_PRICE_STOP.get(p["book"], True):
                 reason = "Closed below stop"
             if reason:
@@ -243,7 +295,7 @@ class Engine:
                 if tk in held or self.in_cooldown(tk, t):
                     continue
                 px = float(F.c[t, j]); dist = C.ATR_MULT["positional"] * float(F.atr[t, j])
-                if self.size("positional", px, px - dist, eq, eq, bear) < 1:
+                if self.size("positional", px, px - dist, eq, eq, bear, F.tv[t, j]) < 1:
                     continue  # too expensive to size
                 pend.append({"action": "BUY", "ticker": tk, "book": "positional",
                              "limit": round(px * (1 + C.CHASE), 2), "stop_dist": dist, "signal_close": px,
@@ -271,13 +323,43 @@ class Engine:
     # ------------------------------------------------------------ fills
     def _buy(self, t, tk, book, px, n, stop, reason):
         S = self.S
-        seg = self.F.seg[self.F.col(tk)]
+        j = self.F.col(tk)
+        seg = self.F.seg[j]
         val = px * n
-        cost = self._cost(val, seg, "BUY")
+        cost = self._cost(val, seg, "BUY", self.F.tv[t, j])
         S["cash"] -= val + cost
         S["positions"].append({"ticker": tk, "book": book, "entry_date": self._date(t), "entry_px": round(px, 2),
                                "shares": int(n), "stop": round(float(stop), 2), "reason": reason, "seg": seg,
                                "entry_cost": round(cost, 2), "last_close": round(px, 2), "days_held": 0})
+
+    def _add(self, t, tk, px, n):
+        if n < 1:
+            return
+        S = self.S
+        p = next(q for q in S["positions"] if q["ticker"] == tk)
+        cost = self._cost(px * n, p["seg"], "BUY")
+        S["cash"] -= px * n + cost
+        tot = p["shares"] + n
+        p["entry_px"] = round((p["entry_px"] * p["shares"] + px * n) / tot, 4)
+        p["entry_cost"] = round(p["entry_cost"] + cost, 2); p["shares"] = tot
+
+    def _trim(self, t, tk, n, px):
+        S = self.S
+        p = next((q for q in S["positions"] if q["ticker"] == tk), None)
+        if not p or px is None:
+            return
+        n = min(n, p["shares"])
+        if n >= p["shares"]:
+            return self._sell(t, tk, px, "Core ETF trimmed out")
+        val = px * n; cost = self._cost(val, p["seg"], "SELL")
+        S["cash"] += val - cost
+        frac = n / p["shares"]
+        pnl = (px - p["entry_px"]) * n - p["entry_cost"] * frac - cost
+        S["trades"].append({"ticker": tk, "book": p["book"], "entry_date": p["entry_date"], "entry_px": p["entry_px"],
+                            "exit_date": self._date(t), "exit_px": round(px, 2), "shares": n, "pnl": round(pnl, 2),
+                            "pnl_pct": round(pnl / (p["entry_px"] * n) * 100, 2), "days": self.days_held(p, t),
+                            "reason_in": p["reason"], "reason_out": "Core ETF trimmed"})
+        p["entry_cost"] = round(p["entry_cost"] * (1 - frac), 2); p["shares"] -= n
 
     def _sell(self, t, tk, px, reason):
         S = self.S
@@ -286,7 +368,7 @@ class Engine:
                 continue
             px = px if px is not None else p.get("last_close", p["entry_px"])
             val = px * p["shares"]
-            cost = self._cost(val, p["seg"], "SELL")
+            cost = self._cost(val, p["seg"], "SELL", self.F.tv[t, self.F.col(tk)])
             S["cash"] += val - cost
             pnl = (px - p["entry_px"]) * p["shares"] - p["entry_cost"] - cost
             S["trades"].append({"ticker": tk, "book": p["book"], "entry_date": p["entry_date"],

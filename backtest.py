@@ -17,7 +17,6 @@ from quant.engine import Engine
 
 def add_etf_proxy(P, data_dir=None):
     """Backtest stand-in for the midcap ETF: the Nifty Midcap 50 index (Yahoo has little ETF history)."""
-    etf = C.TOM["etf"]
     f = pathlib.Path(data_dir or "") / "etf.parquet"
     if data_dir and f.exists():
         x = pd.read_parquet(f)
@@ -28,8 +27,9 @@ def add_etf_proxy(P, data_dir=None):
         c, o = x["Close"].squeeze(), x["Open"].squeeze()
     c = c.reindex(P["c"].index).ffill(); o = o.reindex(P["c"].index).fillna(c)
     o = o.where(o > 0, c)
-    for k, v in (("o", o), ("h", np.maximum(o, c)), ("l", np.minimum(o, c)), ("c", c), ("v", c * 0 + 1e9)):
-        P[k] = P[k].copy(); P[k][etf] = v
+    for etf in (C.TOM["etf"], C.CORE["etf"]):
+        for k, v in (("o", o), ("h", np.maximum(o, c)), ("l", np.minimum(o, c)), ("c", c), ("v", c * 0 + 1e9)):
+            P[k] = P[k].copy(); P[k][etf] = v
     return P
 
 

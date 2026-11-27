@@ -9,7 +9,7 @@ class Features:
         o, h, l, c, v = P["o"], P["h"], P["l"], P["c"], P["v"]
         self.index, self.cols = c.index, list(c.columns)
         self.seg = seg.reindex(self.cols).fillna("SMALL").values
-        self.seg = np.array(["ETF" if c_ == C.TOM["etf"] else s_ for c_, s_ in zip(self.cols, self.seg)], dtype=object)
+        self.seg = np.array(["ETF" if c_ in (C.TOM["etf"], C.CORE["etf"]) else s_ for c_, s_ in zip(self.cols, self.seg)], dtype=object)
         cc = np.log(c / c.shift(1)); cc[cc.abs() > np.log(1.4)] = np.nan
         gap = np.log(o / c.shift(1)); gap[gap.abs() > np.log(1.3)] = np.nan
         gapr = np.expm1(gap); ret1 = np.expm1(cc)
@@ -25,7 +25,7 @@ class Features:
         atr20 = tr.rolling(20, min_periods=15).mean()
         tv = (c * v).rolling(20, min_periods=15).median()
         elig = (c >= C.MIN_PRICE) & (tv >= C.MIN_TRADED_VALUE) & c.notna()
-        for x in [C.TOM["etf"]]:
+        for x in [C.TOM["etf"], C.CORE["etf"]]:
             if x in elig.columns:
                 elig[x] = False            # the ETF is only a vehicle, never a stock signal
 
@@ -43,6 +43,7 @@ class Features:
 
         self.o, self.h, self.l, self.c, self.v = (x.values for x in (o, h, l, c, v))
         self.elig = elig.values
+        self.tv = tv.values
         self.rvol = rvol.values; self.clv = clv.values; self.gapr = gapr.values; self.ret1 = ret1.values
         self.atr = atr20.values; self.sma200 = sma200.values
         self.comp = comp.values; self.mom = mom.values; self.trend = trend.values
@@ -52,7 +53,25 @@ class Features:
         self.washout = ((ret1 <= -0.06) & (rvol >= 3)).values
         self.gap_down = (gapr <= -0.05).values
         self.regime_idx = idx.values; self.regime_avg = avg.values
-        self.bull = (idx > avg).values
+        avg50 = idx.rolling(50, min_periods=50).mean()
+        if C.REGIME.get("mode") == "fast":
+            raw = (idx > avg) | ((idx > avg50) & (avg50 > avg50.shift(10)))
+        else:
+            raw = idx > avg
+        band = C.REGIME.get("band", 0.0)
+        if band > 0:
+            on = idx > avg * (1 + band); off = idx < avg * (1 - band)
+            if C.REGIME.get("mode") == "fast":
+                on = on | ((idx > avg50 * (1 + band)) & (avg50 > avg50.shift(10)))
+                off = off & ~((idx > avg50) & (avg50 > avg50.shift(10)))
+            state, out = False, []
+            for a_, b_ in zip(on.values, off.values):
+                if a_: state = True
+                elif b_: state = False
+                out.append(state)
+            self.bull = np.array(out)
+        else:
+            self.bull = raw.values
 
     def col(self, name):
         if not hasattr(self, "_colmap"):

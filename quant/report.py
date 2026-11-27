@@ -7,7 +7,7 @@ from . import config as C
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 OUT = ROOT / "out"
 BOOK_NAME = {"positional": "Positional (≈6 months)", "swing": "Swing (≈4 weeks)", "btst": "BTST (overnight)",
-             "tom": "Month-end window (ETF)"}
+             "tom": "Month-end window (ETF)", "core": "Core midcap ETF (bull regime)"}
 
 
 def _approx_date(date_str, n):
@@ -79,6 +79,8 @@ def build(F, S, t, run, close_orders=None, generated_at=""):
 def _exit_plan(book, asof):
     if book == "tom":
         return "Sell at the close of the 3rd trading day of next month"
+    if book == "core":
+        return "Held while the regime is Bull; sold when it turns Bear or cash is needed"
     if book == "btst":
         return "Sell into tomorrow's close"
     n = C.HOLD[book]

@@ -36,6 +36,8 @@ def get_data(partial_ok):
     tick, seg = load_universe()
     if C.TOM["enabled"]:
         tick = tick + [C.TOM["etf"]]
+    if C.CORE["enabled"]:
+        tick = tick + [C.CORE["etf"]]
     start = (now_ist().date() - dt.timedelta(days=800)).isoformat()
     import pickle
     cache = os.environ.get("QUANT_CACHE")

@@ -11,7 +11,7 @@ MAX_POS = {"total": 5, "positional": 3, "swing": 2, "btst": 2}
 MAX_WEIGHT = 0.25            # no position above 25% of equity
 
 # Holding periods (trading days) — from the edge-decay study
-HOLD = {"positional": 120, "swing": 20, "btst": 1, "tom": 5}
+HOLD = {"positional": 120, "swing": 20, "btst": 1, "tom": 5, "core": 9999}
 
 # Stops: multiple of 20-day ATR below entry (BTST uses the signal day's low)
 ATR_MULT = {"positional": 3.0, "swing": 2.5}
@@ -41,6 +41,28 @@ USE_PRICE_STOP = {"positional": True, "swing": True, "btst": False}
 TOM = {"enabled": True, "etf": "MID150BEES", "weight": 0.5, "bull_only": True,
        "enter_days_left": 2, "exit_day": 3}
 COST_PCT["ETF"] = 0.002
+
+# Regime filter. mode "sma200": bull when index > 200-day avg.
+# "fast": also bull when index > 50-day avg and that avg is rising (re-enters V-shaped recoveries sooner).
+# band: hysteresis (e.g. 0.01 = switch only when 1% through the line) to cut whipsaws.
+REGIME = {"mode": "sma200", "band": 0.0}
+
+# Swing breakouts only in stocks already ranked this high on the momentum composite (0 = off)
+SWING_MIN_COMP = 0.0
+
+# Core: in a bull regime keep part of the idle cash in a broad midcap ETF instead of a liquid fund
+CORE = {"enabled": False, "etf": "MIDCAPETF", "weight": 0.4, "reserve": 0.35, "rebalance": 0.10}
+COST_PCT["CORE"] = 0.002
+
+# Positional: sell at the next open if the stock's momentum rank falls below this (0 = off),
+# checked only after MIN days held so new positions get room
+POS_EXIT_COMP = 0.0
+POS_EXIT_MIN_DAYS = 20
+
+# Liquidity: never hold more than this share of a stock's 20-day median daily traded value,
+# and add market impact that grows with order size (square-root rule, each side).
+MAX_ADV_PCT = 0.05
+IMPACT_COEF = 0.003          # 0.3% at 10% of a day's value, 0.1% at ~1%
 
 # Delivery
 EMAIL_TO = ""                # the scheduled task holds the address (repo is public)
