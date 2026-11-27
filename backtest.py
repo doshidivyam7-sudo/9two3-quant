@@ -67,7 +67,8 @@ def main():
     bench = pd.Series(F.regime_idx, index=F.index).loc[eq.index]
     bench = bench / bench.iloc[0] * C.CAPITAL
     trades = pd.DataFrame(e.S["trades"])
-    periods = {"All": (None, None), "2015–2020": ("2015-01-01", "2020-12-31"), "2021–2026": ("2021-01-01", None)}
+    y0 = pd.Timestamp(a.start).year
+    periods = {"All": (None, None), f"{y0}–2020": (a.start, "2020-12-31"), "2021–2026": ("2021-01-01", None)}
     out = {"periods": [], "books": [], "equity": [], "trades": e.S["trades"][-400:],
            "meta": {"start": str(eq.index[0].date()), "end": str(eq.index[-1].date()),
                     "capital": C.CAPITAL, "avg_exposure": float(np.mean(expo) * 100), "n_trades": len(trades)}}
