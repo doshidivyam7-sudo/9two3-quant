@@ -18,11 +18,13 @@ Both write dashboard files to `out/` and an email body to `out/email.txt`. On NS
 ## The rules (from the edge-decay study, see `research_edge_decay.py`)
 
 - **Regime**: Bull when the equal-weight index of the universe is above its 200-day average.
-- **Positional** (3 slots, 120 sessions): top 20% on a composite of 6-1 month momentum, distance above the
+- **Fast-churn mode (current):** nothing is held more than 5 sessions; the positional book has 0 slots.
+  Universe: all NSE equities scanned, trades only in companies >= Rs 5,000 cr (`universe_all.txt`, `universe_mcap.csv`).
+- **Positional** (off in fast-churn mode; was 3 slots, 120 sessions): top 20% on a composite of 6-1 month momentum, distance above the
   200-DMA, nearness to the 52-week high and rising volume. Buy at the open (skip if it opens >1.5% above
   the signal close). Stop 3× ATR(20). Bear regime: half risk.
-- **Swing** (2 slots, 20 sessions, Bull only): first 52-week high in 60+ days on 1.5× volume. Buy into the close. Stop 2.5× ATR.
-- **BTST** (2 slots): gap-up ≥4% on ≥2.5× volume holding at or above the open. Buy into the close, sell into the next close.
+- **Swing** (2 slots, 5 sessions, Bull only): first 52-week high in 60+ days on 1.5× volume. Buy into the close. Stop 2.5× ATR.
+- **BTST** (3 slots): gap-up ≥4% on ≥2.5× volume holding at or above the open. Buy into the close, sell into the next close.
 - **Exits**: next open on a failed gap-up, high-volume washout, large gap-down, or a close below the stop.
   Cooldown afterwards (10 sessions, 60 after a washout).
 - **Sizing**: risk 1% / 0.75% / 0.5% of equity, max 25% in one stock, 5 positions in total. Idle cash is assumed
@@ -33,8 +35,9 @@ All knobs are in `quant/config.py`.
 ## Backtest
 
 `python backtest.py` (downloads history) or `python backtest.py --data <parquet dir>`.
-2015 – Nov 2026 on ₹1 lakh: about 18% a year with a worst fall of about 12%, against about 15% and 53% for the
-equal-weight universe. Both use today's index members (survivorship bias), and the rules were chosen on the full history.
+Fast-churn mode, Nov 2016 – Nov 2026 on ₹1 lakh: about 14.8% a year, worst fall about −18%, Sharpe 1.46
+(2016–20 about 3% a year, 2021–26 about 24%). The 6-month-hold version made about 23.6% a year (worst fall −13.5%).
+Universes use today's listings (survivorship bias), and the rules were chosen on the same history.
 
 ## Upkeep
 

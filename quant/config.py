@@ -7,11 +7,13 @@ RISK = {"positional": 0.010, "swing": 0.0075, "btst": 0.005}
 BEAR_RISK_MULT = 0.5         # positional risk is halved in a bear regime
 
 # How many positions at once
-MAX_POS = {"total": 5, "positional": 3, "swing": 2, "btst": 2}
+# Fast-churn mode (Div, 27 Nov 2026): nothing held longer than 7 calendar days (5 sessions).
+# The 6-month momentum book is switched off; capacity goes to breakouts and BTST.
+MAX_POS = {"total": 5, "positional": 0, "swing": 2, "btst": 3}
 MAX_WEIGHT = 0.25            # no position above 25% of equity
 
 # Holding periods (trading days) — from the edge-decay study
-HOLD = {"positional": 120, "swing": 20, "btst": 1, "tom": 5, "core": 9999}
+HOLD = {"positional": 5, "swing": 5, "btst": 1, "tom": 5, "core": 9999}
 
 # Stops: multiple of 20-day ATR below entry (BTST uses the signal day's low)
 ATR_MULT = {"positional": 3.0, "swing": 2.5}

@@ -28,15 +28,22 @@ If an email says "No actions", do nothing. Quiet days are normal.
 
 | Book | Holding time | How many | When you act |
 |---|---|---|---|
-| Positional (momentum) | about 6 months | up to 3 | at the open |
-| Swing (52-week-high breakout) | about 4 weeks | up to 2 | last 30 minutes |
-| BTST (gap-up that holds) | overnight | up to 2 | last 30 minutes, sell next day's close |
-| Month-end window (midcap ETF) | 5 trading days around month end | 1 | last 30 minutes |
+| Breakout (first new 52-week high on volume) | up to 5 sessions (1 week) | up to 2 | last 30 minutes |
+| BTST (gap-up that holds) | overnight | up to 3 | last 30 minutes, sell next day's close |
+| Month-end window (midcap ETF) | 5 sessions around month end | 1 | last 30 minutes |
+
+**Nothing is held longer than 7 calendar days (5 trading sessions).** The 6-month momentum trades are
+switched off at your request. Over 10 years this fast version made about 15% a year (worst fall −18%),
+against about 24% (worst fall −14%) for the version with 6-month holds. Most of the gap is trading
+costs: it trades about 195 times a year.
+
+**Which stocks:** every NSE stock is scanned (about 2,250), but trades are only taken in companies worth
+₹5,000 crore or more. Signals in smaller companies are listed in the emails for information only.
 | Cash | — | — | sits in a liquid ETF |
 
 ## What "risk ₹" means
 
-It's what you lose if the stock hits its stop: about ₹1,000 on a ₹1 lakh account for a positional trade.
+It's what you lose if the stock hits its stop: about ₹750 on a ₹1 lakh account for a breakout trade, ₹500 for a BTST.
 That's why share counts look small. The point is to survive the losers, because even good trades lose
 about half the time.
 
